@@ -13,3 +13,21 @@ An AI-powered research assistant that searches the web, extracts articles, summa
 ## Status
 
 🚧 In Development
+
+
+
+
+
+## Features
+
+## Project Goals
+
+## Folder Structure
+
+## Tech Stack
+
+## Roadmap
+
+## Installation
+
+## Future Improvements

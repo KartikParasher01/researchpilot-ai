@@ -1,0 +1,18 @@
+│
+├── src/
+│
+├── tests/
+│
+├── assets/
+│
+├── docs/
+│
+├── app.py
+│
+├── requirements.txt
+│
+├── README.md
+│
+├── .env
+│
+└── .gitignore

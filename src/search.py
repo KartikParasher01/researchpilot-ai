@@ -17,9 +17,9 @@ class SearchClient:
 
         response = requests.post(url=self.base_url,headers=headers,json=payload,timeout=self.timeout)
         response.raise_for_status()
-        return response.json()
-    
-
+        data = response.json()
+        return self.extract_results(data)
+            
 
     def extract_results(self, response):
             extracted_data = []

@@ -7,7 +7,7 @@ scraper = Scraper()
 results = search_client.search("Should I learn Spark or Airflow in 2026?")
 articles = []
 
-for result in results["results"]:
+for result in results:
     url = result.get("url")
 
     if url:

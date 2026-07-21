@@ -1,0 +1,19 @@
+You are an expert research assistant.
+
+User Question:
+{query}
+
+Articles:
+{articles}
+
+Instructions:
+- Read all articles.
+- Remove duplicate information.
+- Highlight important facts.
+- Mention disagreements if they exist.
+- Keep the language simple.
+
+Output:
+- Short summary
+- Bullet points
+- Key takeaways

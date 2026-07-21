@@ -22,12 +22,12 @@ class SearchClient:
             
 
     def extract_results(self, response):
-            extracted_data = []
-            for result in response.get("results", []):
-                article = {"url": result.get("url", ""), "title": result.get("title", ""), "content": result.get("content", "")}
-                extracted_data.append(article)
-            
-            return extracted_data
+        extracted_data = []
+        for result in response.get("results", []):
+            article = {"url": result.get("url", ""), "title": result.get("title", ""), "content": result.get("content", "")}
+            extracted_data.append(article)
+        
+        return extracted_data
 
 
 def extract_result(self,response):

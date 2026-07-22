@@ -1,11 +1,13 @@
 from openai import OpenAI
+import logging
+import json
+from src.config import (LLM_API_KEY,LLM_MODEL,TEMPERATURE,MAX_TOKENS,)
+from src.prompts import build_research_messages
+from src.models import ResearchResponse
+from pydantic import ValidationError
+logger = logging.getLogger(__name__)
 
-from src.config import (
-    LLM_API_KEY,
-    LLM_MODEL,
-    TEMPERATURE,
-    MAX_TOKENS,
-)
+
 
 class LLMClient:
 
@@ -24,64 +26,45 @@ class LLMClient:
 
 
     def summarize(self, query, articles):
+        messages = build_research_messages(query, articles)
 
-        prompt = self.build_prompt(query, articles)
+        try:
+            response = self.call_model(messages)
+        except Exception:
+            logger.exception("LLM request failed")
+            return None
 
-        response = self.call_model(prompt)
-
-        summary = self.parse_response(response)
-
-        return summary
+        return self.parse_response(response)
 
 
-    def build_prompt(self, query, articles):
-        """
-        Builds the prompt that will be sent to the LLM.
-        """
-        parts = []
+    def call_model(self, messages):
+        logger.info("Calling Groq API")
 
-        parts.append("You are an expert AI Research Assistant.")
-        parts.append(f"User Query:\n{query}")
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
+            return response
 
-        for i, article in enumerate(articles, start=1):
-            parts.append(f"""
-        Article {i}
+        except Exception:
+            logger.exception("API request failed")
+            raise
 
-        Title:
-        {article['title']}
-
-        Content:
-        {article['content']}
-        """)
-
-        parts.append("""
-        Instructions:
-        - Summarize the articles.
-        - Remove duplicates.
-        - Use bullet points.
-        """)
-
-        prompt = "\n".join(parts)
-
-        return prompt
-
-       
-
-    def call_model(self, prompt):
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-        )
-
-        return response
-    
+        
     def parse_response(self, response):
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        try:
+            data = json.loads(content)
+            return ResearchResponse.model_validate(data)
+        except json.JSONDecodeError:
+                logger.exception("LLM returned invalid JSON")
+                return None
+        
+        except ValidationError:
+            logger.exception("LLM response did not match ResearchResponse")
+            return None
+            
+    

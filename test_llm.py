@@ -17,6 +17,7 @@ schedule and monitor data pipelines.
     }
 ]
 
-summary = llm.summarize(query, articles)
+data = llm.summarize(query, articles)
 
-print(summary)
+if data is not None:
+    print(data["summary"])

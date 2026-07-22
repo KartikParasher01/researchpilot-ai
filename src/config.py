@@ -13,5 +13,7 @@ TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER")
 LLM_API_KEY= os.getenv("LLM_API_KEY")
 LLM_MODEL= os.getenv("LLM_MODEL")
-TEMPERATURE= float(os.getenv("OPENAI_TEMPERATURE", 0.3))
-MAX_TOKENS= int(os.getenv("OPENAI_MAX_TOKENS", 1000))
+TEMPERATURE= float(os.getenv("LLM_TEMPERATURE", 0.3))
+MAX_TOKENS= int(os.getenv("LLM_MAX_TOKENS", 1000))
+
+

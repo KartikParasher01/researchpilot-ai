@@ -34,7 +34,14 @@ class LLMClient:
             logger.exception("LLM request failed")
             return None
 
-        return self.parse_response(response)
+        result = self.parse_response(response)
+
+        if result is None:
+            return None
+
+        result["sources"] = articles
+
+        return result
 
 
     def call_model(self, messages):
@@ -53,18 +60,30 @@ class LLMClient:
             logger.exception("API request failed")
             raise
 
-        
+            
     def parse_response(self, response):
         content = response.choices[0].message.content
+
         try:
             data = json.loads(content)
-            return ResearchResponse.model_validate(data)
+            result = ResearchResponse.model_validate(data)
+
+            return result.model_dump()
+
         except json.JSONDecodeError:
-                logger.exception("LLM returned invalid JSON")
-                return None
-        
-        except ValidationError:
-            logger.exception("LLM response did not match ResearchResponse")
+            logger.exception("LLM returned invalid JSON")
             return None
-            
-    
+
+        except ValidationError:
+            logger.exception("LLM response did not match schema")
+            return None
+                
+    # def parse_response(self, response):
+    #     content = response.choices[0].message.content
+
+    #     print("=" * 80)
+    #     print(content)
+    #     print("=" * 80)
+
+    #     data = json.loads(content)
+    #     return ResearchResponse.model_validate(data)

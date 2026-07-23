@@ -5,7 +5,7 @@ from enum import Enum
 
 class Source(BaseModel):
     title: str
-    url: HttpUrl
+    url: HttpUrl | None = None
 
 class ConfidenceLevel(str, Enum):
     HIGH = "High"
@@ -16,6 +16,6 @@ class ResearchResponse(BaseModel):
     summary: str
     key_points: List[str]
     analysis: str
-    sources: List[Source]
+    # sources: List[Source]
     confidence: ConfidenceLevel
 

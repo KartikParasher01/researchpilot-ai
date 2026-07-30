@@ -29,11 +29,4 @@ class SearchClient:
         
         return extracted_data
 
-
-def extract_result(self,response):
-     a = []
-     for i in response.get('title'):
-          article = {"url": i.get("url", ""), "title": i.get("title", ""), "content": i.get("content", "")}
-          a.append(article)
-     return a
            

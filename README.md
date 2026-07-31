@@ -20,6 +20,7 @@ An AI-powered research assistant that searches the web, extracts relevant articl
 - 🖥️ Interactive Gradio UI
 - ✅ Structured JSON validation using Pydantic
 
+## Architecture
 
 User Question
         │
@@ -38,7 +39,7 @@ User Question
         ▼
  Gradio UI
 
-
+## -------------------------------------------------------------
 
  User
  │
@@ -54,14 +55,14 @@ Research Engine
  ▼
 Research Report
 
-
+## Tech Stack
 
 Python
 Gradio
 Groq
 
 
-### Folder Structure
+## Folder Structure
 
 ResearchPilot_AI/
 
@@ -80,8 +81,8 @@ ResearchPilot_AI/
 
 
 
-### Learning Outcomes
-## What I Learned
+## Learning Outcomes
+### What I Learned
 
 - API Integration
 - Web Scraping
@@ -91,7 +92,7 @@ ResearchPilot_AI/
 - Gradio
 - Python Generators (coming soon)
 
-### Future Improvements
+## Future Improvements
 
 - Streaming responses
 - PDF report export

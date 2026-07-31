@@ -21,39 +21,34 @@ An AI-powered research assistant that searches the web, extracts relevant articl
 - ✅ Structured JSON validation using Pydantic
 
 ## Architecture
+                   +------------------+
+                   |     User         |
+                   +--------+---------+
+                            |
+                            v
+                   +------------------+
+                   |    Gradio UI     |
+                   +--------+---------+
+                            |
+                            v
+                   +------------------+
+                   |  research.py     |
+                   +--------+---------+
+                            |
+        +-------------------+-------------------+
+        |                   |                   |
+        v                   v                   v
++---------------+   +---------------+   +---------------+
+|  search.py    |   |  scraper.py   |   |    llm.py     |
++---------------+   +---------------+   +---------------+
+        |                   |                   |
+        +-------------------+-------------------+
+                            |
+                            v
+                   +------------------+
+                   | Research Report  |
+                   +------------------+
 
-User Question
-        │
-        ▼
- Search Client
-        │
-        ▼
- Article Scraper
-        │
-        ▼
- LLM
-        │
-        ▼
- Structured Response
-        │
-        ▼
- Gradio UI
-
-## ------------------------------------------------------------------------------------------------
-
- User
- │
- ▼
-Gradio UI
- │
- ▼
-Research Engine
- ├── Search Client
- ├── Scraper
- └── LLM Client
- │
- ▼
-Research Report
 
 ## Tech Stack
 

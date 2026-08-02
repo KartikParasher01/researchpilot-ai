@@ -29,6 +29,11 @@ def research(query: str, progress=None):
         if not url:
             continue
 
+            # Skip PDF files
+        if url.lower().endswith(".pdf"):
+            print(f"Skipping PDF: {url}")
+            continue
+
         try:
             article = {
                 "title": result.get("title"),

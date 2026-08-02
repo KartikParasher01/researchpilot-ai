@@ -62,7 +62,12 @@ class LLMClient:
 
             
     def parse_response(self, response):
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content 
+        print("=" * 100)
+        print("RAW LLM RESPONSE")
+        print("=" * 100)
+        print(content)
+        print("=" * 100)
 
         try:
             data = json.loads(content)

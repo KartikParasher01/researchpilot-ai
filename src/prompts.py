@@ -99,3 +99,56 @@ Return ONLY valid JSON using EXACTLY this schema:
             "content": user_prompt,
         },
     ]
+
+
+
+
+
+def build_query_planner_messages(user_query, max_queries):
+
+    system_prompt = """
+You are QueryPlanner AI.
+
+Your ONLY responsibility is to generate high-quality search engine queries.
+
+Do NOT answer the user's question.
+
+Do NOT explain your reasoning.
+
+Generate concise search queries that maximize search quality.
+
+Avoid duplicate or overlapping queries.
+
+Return ONLY valid JSON.
+"""
+
+    user_prompt = f"""
+User Question:
+
+{user_query}
+
+Generate between 1 and {max_queries} search queries.
+
+Generate only the minimum number of search queries required.
+
+Return ONLY JSON.
+
+Format:
+
+{{
+    "queries": [
+        ""
+    ]
+}}
+"""
+
+    return [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": user_prompt,
+        },
+    ]

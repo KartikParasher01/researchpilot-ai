@@ -25,24 +25,14 @@ class LLMClient:
 
 
 
-    def summarize(self, query, articles):
-        messages = build_research_messages(query, articles)
-
+    def generate(self, messages):
         try:
             response = self.call_model(messages)
+            return response.choices[0].message.content
+
         except Exception:
             logger.exception("LLM request failed")
             return None
-
-        result = self.parse_response(response)
-
-        if result is None:
-            return None
-
-        result["sources"] = articles
-
-        return result
-
 
     def call_model(self, messages):
         logger.info("Calling Groq API")

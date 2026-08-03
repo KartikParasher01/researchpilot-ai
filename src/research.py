@@ -1,14 +1,20 @@
 from src.search import SearchClient
 from src.scraper import Scraper
 from src.llm import LLMClient
+from src.prompts import build_research_messages
+from src.models import ResearchResponse
+from pydantic import ValidationError
+import logging
+import json
 
 search_client = SearchClient()
 scraper = Scraper()
 llm = LLMClient()
 
+logger = logging.getLogger(__name__)
+
 
 def research(query: str, progress=None):
-
     # Step 1: Search the web
     if progress:
         print("🔍 Searching...")
@@ -25,11 +31,9 @@ def research(query: str, progress=None):
 
     for result in results:
         url = result.get("url")
-
         if not url:
             continue
 
-            # Skip PDF files
         if url.lower().endswith(".pdf"):
             print(f"Skipping PDF: {url}")
             continue
@@ -40,13 +44,10 @@ def research(query: str, progress=None):
                 "url": url,
                 "content": scraper.scrape(url),
             }
-
             articles.append(article)
-
         except Exception as e:
             print(f"Failed to scrape {url}: {e}")
 
-    # No articles found
     if not articles:
         return {
             "success": False,
@@ -59,12 +60,34 @@ def research(query: str, progress=None):
         print("🧠 AI is analyzing...")
         progress(0.8, desc="🧠 AI is analyzing the articles...")
 
-    result = llm.summarize(query, articles)
+    messages = build_research_messages(query, articles)
+    raw_result = llm.generate(messages)
 
-    if result is None:
+    if raw_result is None:
         return {
             "success": False,
             "message": "Failed to generate research report.",
+            "data": None,
+        }
+
+    try:
+        data = json.loads(raw_result)
+        parsed_result = ResearchResponse.model_validate(data).model_dump()
+        parsed_result["sources"] = articles
+
+    except json.JSONDecodeError:
+        logger.exception("LLM returned invalid JSON")
+        return {
+            "success": False,
+            "message": "LLM returned invalid JSON.",
+            "data": None,
+        }
+
+    except ValidationError:
+        logger.exception("LLM response failed validation")
+        return {
+            "success": False,
+            "message": "Invalid response schema.",
             "data": None,
         }
 
@@ -76,5 +99,5 @@ def research(query: str, progress=None):
     return {
         "success": True,
         "message": "Success",
-        "data": result,
+        "data": parsed_result,
     }

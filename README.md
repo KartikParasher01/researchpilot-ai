@@ -96,3 +96,8 @@ ResearchPilot_AI/
 - Multi-model support
 - RAG integration
 - Search history
+
+
+## Result Preview
+
+![ResearchPilot AI result preview](Screenshot.png)

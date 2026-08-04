@@ -1,3 +1,4 @@
+from src.query_planner import QueryPlanner
 from src.search import SearchClient
 from src.scraper import Scraper
 from src.llm import LLMClient
@@ -10,6 +11,7 @@ import json
 search_client = SearchClient()
 scraper = Scraper()
 llm = LLMClient()
+planner = QueryPlanner(llm)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,22 @@ def research(query: str, progress=None):
         print("🔍 Searching...")
         progress(0.2, desc="🔍 Searching the web...")
 
-    results = search_client.search(query)
+    queries = planner.generate_queries(query)
+    results = []
+
+    for search_query in queries:
+        print(f"Searching: {search_query}")
+
+        search_results = search_client.search(search_query)
+
+        results.extend(search_results)
+
+    if queries is None:
+        return {
+            "success": False,
+            "message": "Failed to generate search queries.",
+            "data": None,
+        }
 
     # Step 2: Scrape articles
     if progress:
@@ -60,7 +77,17 @@ def research(query: str, progress=None):
         print("🧠 AI is analyzing...")
         progress(0.8, desc="🧠 AI is analyzing the articles...")
 
-    messages = build_research_messages(query, articles)
+    print(f"\nTotal Articles: {len(articles)}")
+
+    for i, article in enumerate(articles, 1):
+        print(f"{i}. {article['title']}")
+        print(f"   URL: {article['url']}")
+        print(f"   Characters: {len(article['content'])}")
+        print("-" * 80)
+    
+    print(len(articles))
+    # messages = build_research_messages(query, articles)
+    messages = build_research_messages(query, articles[:2])
     raw_result = llm.generate(messages)
 
     if raw_result is None:
@@ -71,6 +98,11 @@ def research(query: str, progress=None):
         }
 
     try:
+        print("=" * 100)
+        print("RAW LLM RESPONSE")
+        print("=" * 100)
+        print(raw_result)
+        print("=" * 100)
         data = json.loads(raw_result)
         parsed_result = ResearchResponse.model_validate(data).model_dump()
         parsed_result["sources"] = articles

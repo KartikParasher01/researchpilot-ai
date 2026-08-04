@@ -19,3 +19,5 @@ class ResearchResponse(BaseModel):
     # sources: List[Source]
     confidence: ConfidenceLevel
 
+class QueryPlannerResponse(BaseModel):
+    queries: List[str]

@@ -25,10 +25,30 @@ class LLMClient:
 
 
 
+    # def generate(self, messages):
+    #     try:
+    #         response = self.call_model(messages)
+    #         return response.choices[0].message.content
+
+    #     except Exception:
+    #         logger.exception("LLM request failed")
+    #         return None
+
+
     def generate(self, messages):
         try:
             response = self.call_model(messages)
-            return response.choices[0].message.content
+
+            print(type(response))
+            print(type(response.choices[0].message.content))
+
+            content = response.choices[0].message.content
+
+            print("=" * 80)
+            print(repr(content[:200]))
+            print("=" * 80)
+
+            return content
 
         except Exception:
             logger.exception("LLM request failed")
@@ -77,6 +97,7 @@ class LLMClient:
     #     content = response.choices[0].message.content
 
     #     print("=" * 80)
+
     #     print(content)
     #     print("=" * 80)
 

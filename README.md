@@ -101,3 +101,4 @@ ResearchPilot_AI/
 ## Result Preview
 
 ![ResearchPilot AI result preview](Screenshot.png)
+

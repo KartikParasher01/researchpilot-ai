@@ -23,6 +23,12 @@ def research(query: str, progress=None):
         progress(0.2, desc="🔍 Searching the web...")
 
     queries = planner.generate_queries(query)
+    if queries is None:
+        return {
+            "success": False,
+            "message": "Failed to generate search queries.",
+            "data": None,
+        }
     results = []
 
     for search_query in queries:
@@ -32,12 +38,23 @@ def research(query: str, progress=None):
 
         results.extend(search_results)
 
-    if queries is None:
-        return {
-            "success": False,
-            "message": "Failed to generate search queries.",
-            "data": None,
-        }
+    seen_urls = set()
+    unique_results = []
+
+    for result in results:
+        url = result.get("url")
+
+        if not url:
+            continue
+
+        if url in seen_urls:
+            continue
+
+        seen_urls.add(url)
+        unique_results.append(result)
+
+    print(f"Total search results: {len(results)}")
+    print(f"Unique search results: {len(unique_results)}")
 
     # Step 2: Scrape articles
     if progress:
@@ -46,7 +63,7 @@ def research(query: str, progress=None):
 
     articles = []
 
-    for result in results:
+    for result in unique_results:
         url = result.get("url")
         if not url:
             continue

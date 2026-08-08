@@ -45,8 +45,13 @@ class Scraper:
     
     def scrape(self, url):
         html = self.fetch_html(url)
+
+        if html is None:
+            return None
+
         soup = self.parse_html(html)
         text = self.extract_article_text(soup)
+
         return text
 
 

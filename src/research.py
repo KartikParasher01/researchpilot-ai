@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def research(query: str, progress=None):
     # Step 1: Search the web
     if progress:
-        print("🔍 Searching...")
         progress(0.2, desc="🔍 Searching the web...")
 
     queries = planner.generate_queries(query)
@@ -32,7 +31,7 @@ def research(query: str, progress=None):
     results = []
 
     for search_query in queries:
-        print(f"Searching: {search_query}")
+    
 
         search_results = search_client.search(search_query)
 
@@ -58,7 +57,6 @@ def research(query: str, progress=None):
 
     # Step 2: Scrape articles
     if progress:
-        print("📄 Scraping articles...")
         progress(0.5, desc="📄 Scraping articles...")
 
     articles = []
@@ -68,16 +66,18 @@ def research(query: str, progress=None):
         if not url:
             continue
 
-        if url.lower().endswith(".pdf"):
-            print(f"Skipping PDF: {url}")
-            continue
-
         try:
+            content = scraper.scrape(url)
+
+            if not content:
+                continue
+
             article = {
                 "title": result.get("title"),
                 "url": url,
-                "content": scraper.scrape(url),
+                "content": content,
             }
+
             articles.append(article)
         except Exception as e:
             print(f"Failed to scrape {url}: {e}")
@@ -91,20 +91,10 @@ def research(query: str, progress=None):
 
     # Step 3: Generate AI summary
     if progress:
-        print("🧠 AI is analyzing...")
         progress(0.8, desc="🧠 AI is analyzing the articles...")
 
-    print(f"\nTotal Articles: {len(articles)}")
 
-    for i, article in enumerate(articles, 1):
-        print(f"{i}. {article['title']}")
-        print(f"   URL: {article['url']}")
-        print(f"   Characters: {len(article['content'])}")
-        print("-" * 80)
-    
-    print(len(articles))
-    # messages = build_research_messages(query, articles)
-    messages = build_research_messages(query, articles[:2])
+    messages = build_research_messages(query, articles)
     raw_result = llm.generate(messages)
 
     if raw_result is None:
@@ -115,11 +105,7 @@ def research(query: str, progress=None):
         }
 
     try:
-        print("=" * 100)
-        print("RAW LLM RESPONSE")
-        print("=" * 100)
-        print(raw_result)
-        print("=" * 100)
+
         data = json.loads(raw_result)
         parsed_result = ResearchResponse.model_validate(data).model_dump()
         parsed_result["sources"] = articles
@@ -142,7 +128,6 @@ def research(query: str, progress=None):
 
     # Step 4: Finished
     if progress:
-        print("✅ Done!")
         progress(1.0, desc="✅ Report generated!")
 
     return {

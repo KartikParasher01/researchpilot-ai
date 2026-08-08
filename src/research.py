@@ -31,7 +31,6 @@ def research(query: str, progress=None):
     results = []
 
     for search_query in queries:
-    
 
         search_results = search_client.search(search_query)
 
@@ -54,6 +53,8 @@ def research(query: str, progress=None):
 
     print(f"Total search results: {len(results)}")
     print(f"Unique search results: {len(unique_results)}")
+
+    print(f"Results selected for scraping: {len(unique_results)}")
 
     # Step 2: Scrape articles
     if progress:
@@ -82,6 +83,9 @@ def research(query: str, progress=None):
         except Exception as e:
             print(f"Failed to scrape {url}: {e}")
 
+    articles = articles[:5]
+    print(f"Articles successfully scraped: {len(articles)}")
+
     if not articles:
         return {
             "success": False,
@@ -92,7 +96,6 @@ def research(query: str, progress=None):
     # Step 3: Generate AI summary
     if progress:
         progress(0.8, desc="🧠 AI is analyzing the articles...")
-
 
     messages = build_research_messages(query, articles)
     raw_result = llm.generate(messages)

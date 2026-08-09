@@ -1,3 +1,5 @@
+from pyexpat.errors import messages
+
 from src.query_planner import QueryPlanner
 from src.search import SearchClient
 from src.scraper import Scraper
@@ -97,7 +99,14 @@ def research(query: str, progress=None):
     if progress:
         progress(0.8, desc="🧠 AI is analyzing the articles...")
 
-    messages = build_research_messages(query, articles)
+    for i, article in enumerate(articles, 1):
+        print(f"Article {i}: {article['title']}")
+        print(f"Characters: {len(article['content'])}")
+        print(f"First 100 chars: {repr(article['content'][:100])}")
+        print("-" * 80)
+
+
+    messages = build_research_messages(query, articles[:2])
     raw_result = llm.generate(messages)
 
     if raw_result is None:

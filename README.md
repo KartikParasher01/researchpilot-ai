@@ -213,19 +213,6 @@ LLM_TEMPERATURE=0.3
 LLM_MAX_TOKENS=1000
 ```
 
-### Important
-
-Never commit your `.env` file or API keys to GitHub.
-
-Your `.gitignore` should include:
-
-```gitignore
-.env
-.venv/
-__pycache__/
-*.pyc
-```
-
 ---
 
 ## 🏃 Running Locally

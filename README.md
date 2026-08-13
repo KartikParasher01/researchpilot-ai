@@ -8,6 +8,16 @@ Instead of relying only on the LLM's internal knowledge, ResearchPilot retrieves
 
 ---
 
+# 🔎 ResearchPilot AI
+
+AI-powered research assistant that searches the web, scrapes relevant sources, and generates a structured research report using an LLM.
+
+## 🚀 Live Demo
+
+👉 [Try ResearchPilot AI](https://researchpilot-ai-rziv.onrender.com/)
+
+
+
 ## 🚀 Features
 
 * 🔍 **Real-time web research**

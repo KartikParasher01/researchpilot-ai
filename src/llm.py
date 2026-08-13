@@ -1,18 +1,21 @@
-from openai import OpenAI
 import logging
-import json
-from src.config import (LLM_API_KEY,LLM_MODEL,TEMPERATURE,MAX_TOKENS,)
-from src.prompts import build_research_messages
-from src.models import ResearchResponse
-from pydantic import ValidationError
-logger = logging.getLogger(__name__)
 
+from openai import OpenAI
+
+from src.config import (
+    LLM_API_KEY,
+    LLM_MODEL,
+    TEMPERATURE,
+    MAX_TOKENS,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
 
     def __init__(self):
-
         self.api_key = LLM_API_KEY
         self.model = LLM_MODEL
         self.temperature = TEMPERATURE
@@ -20,24 +23,15 @@ class LLMClient:
 
         self.client = OpenAI(
             api_key=self.api_key,
-            base_url="https://api.groq.com/openai/v1"
-        ) 
-
-
-
-    # def generate(self, messages):
-    #     try:
-    #         response = self.call_model(messages)
-    #         return response.choices[0].message.content
-
-    #     except Exception:
-    #         logger.exception("LLM request failed")
-    #         return None
-
+            base_url="https://api.groq.com/openai/v1",
+        )
 
     def generate(self, messages):
+        """Generate a response from the LLM."""
+
         try:
             response = self.call_model(messages)
+
             return response.choices[0].message.content
 
         except Exception:
@@ -45,51 +39,15 @@ class LLMClient:
             return None
 
     def call_model(self, messages):
+        """Send messages to the Groq API."""
+
         logger.info("Calling Groq API")
 
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-            )
-            return response
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+        )
 
-        except Exception:
-            logger.exception("API request failed")
-            raise
-
-            
-    def parse_response(self, response):
-        content = response.choices[0].message.content 
-        print("=" * 100)
-        print("RAW LLM RESPONSE")
-        print("=" * 100)
-        print(content)
-        print("=" * 100)
-
-        try:
-            data = json.loads(content)
-            result = ResearchResponse.model_validate(data)
-
-            return result.model_dump()
-
-        except json.JSONDecodeError:
-            logger.exception("LLM returned invalid JSON")
-            return None
-
-        except ValidationError:
-            logger.exception("LLM response did not match schema")
-            return None
-                
-    # def parse_response(self, response):
-    #     content = response.choices[0].message.content
-
-    #     print("=" * 80)
-
-    #     print(content)
-    #     print("=" * 80)
-
-    #     data = json.loads(content)
-    #     return ResearchResponse.model_validate(data)
+        return response

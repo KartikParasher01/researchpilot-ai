@@ -1,4 +1,7 @@
-from pyexpat.errors import messages
+import json
+import logging
+
+from pydantic import ValidationError
 
 from src.query_planner import QueryPlanner
 from src.search import SearchClient
@@ -6,37 +9,84 @@ from src.scraper import Scraper
 from src.llm import LLMClient
 from src.prompts import build_research_messages
 from src.models import ResearchResponse
-from pydantic import ValidationError
-import logging
-import json
+
+
+logger = logging.getLogger(__name__)
+
+MAX_ARTICLES = 5
+
 
 search_client = SearchClient()
 scraper = Scraper()
 llm = LLMClient()
 planner = QueryPlanner(llm)
 
-logger = logging.getLogger(__name__)
-
 
 def research(query: str, progress=None):
-    # Step 1: Search the web
+    """
+    Run the complete ResearchPilot pipeline:
+
+    1. Generate search queries
+    2. Search the web
+    3. Deduplicate search results
+    4. Scrape usable sources
+    5. Generate a research report
+    6. Validate the LLM response
+    """
+
+    # ---------------------------------------------------------
+    # Step 1: Generate search queries
+    # ---------------------------------------------------------
+
     if progress:
         progress(0.2, desc="🔍 Searching the web...")
 
-    queries = planner.generate_queries(query)
-    if queries is None:
+    try:
+        queries = planner.generate_queries(query)
+    except Exception:
+        logger.exception("Query planning failed")
         return {
             "success": False,
             "message": "Failed to generate search queries.",
             "data": None,
         }
+
+    if not queries:
+        return {
+            "success": False,
+            "message": "No search queries were generated.",
+            "data": None,
+        }
+
+    # ---------------------------------------------------------
+    # Step 2: Search the web
+    # ---------------------------------------------------------
+
     results = []
 
     for search_query in queries:
+        try:
+            search_results = search_client.search(search_query)
 
-        search_results = search_client.search(search_query)
+            if search_results:
+                results.extend(search_results)
 
-        results.extend(search_results)
+        except Exception:
+            logger.exception(
+                "Search failed for query: %s",
+                search_query,
+            )
+
+    if not results:
+        return {
+            "success": False,
+            "message": "No search results were found.",
+            "data": None,
+        }
+
+    # ---------------------------------------------------------
+    # Step 3: Remove duplicate URLs
+    # ---------------------------------------------------------
 
     seen_urls = set()
     unique_results = []
@@ -44,21 +94,22 @@ def research(query: str, progress=None):
     for result in results:
         url = result.get("url")
 
-        if not url:
-            continue
-
-        if url in seen_urls:
+        if not url or url in seen_urls:
             continue
 
         seen_urls.add(url)
         unique_results.append(result)
 
-    print(f"Total search results: {len(results)}")
-    print(f"Unique search results: {len(unique_results)}")
+    logger.info(
+        "Total search results: %d | Unique results: %d",
+        len(results),
+        len(unique_results),
+    )
 
-    print(f"Results selected for scraping: {len(unique_results)}")
+    # ---------------------------------------------------------
+    # Step 4: Scrape articles
+    # ---------------------------------------------------------
 
-    # Step 2: Scrape articles
     if progress:
         progress(0.5, desc="📄 Scraping articles...")
 
@@ -66,6 +117,7 @@ def research(query: str, progress=None):
 
     for result in unique_results:
         url = result.get("url")
+
         if not url:
             continue
 
@@ -75,55 +127,64 @@ def research(query: str, progress=None):
             if not content:
                 continue
 
-            article = {
-                "title": result.get("title"),
-                "url": url,
-                "content": content,
-            }
+            articles.append(
+                {
+                    "title": result.get("title"),
+                    "url": url,
+                    "content": content,
+                }
+            )
 
-            articles.append(article)
-        except Exception as e:
-            print(f"Failed to scrape {url}: {e}")
+        except Exception:
+            logger.exception("Failed to scrape: %s", url)
 
-    articles = articles[:5]
-    print(f"Articles successfully scraped: {len(articles)}")
+    # Limit the amount of content sent to the LLM.
+    articles = articles[:MAX_ARTICLES]
+
+    logger.info(
+        "Articles successfully scraped: %d",
+        len(articles),
+    )
 
     if not articles:
         return {
             "success": False,
-            "message": "Couldn't retrieve enough articles.",
+            "message": "Couldn't retrieve any usable articles.",
             "data": None,
         }
 
-    # Step 3: Generate AI summary
+    # ---------------------------------------------------------
+    # Step 5: Generate research report
+    # ---------------------------------------------------------
+
     if progress:
-        progress(0.8, desc="🧠 AI is analyzing the articles...")
+        progress(0.8,desc="🧠 AI is analyzing the articles...",)
 
-    for i, article in enumerate(articles, 1):
-        print(f"Article {i}: {article['title']}")
-        print(f"Characters: {len(article['content'])}")
-        print(f"First 100 chars: {repr(article['content'][:100])}")
-        print("-" * 80)
-
-
-    messages = build_research_messages(query, articles[:2])
-    raw_result = llm.generate(messages)
-
-    if raw_result is None:
-        return {
-            "success": False,
-            "message": "Failed to generate research report.",
-            "data": None,
-        }
+    messages = build_research_messages(query,articles,)
 
     try:
+        raw_result = llm.generate(messages)
+    except Exception:
+        logger.exception("LLM request failed")
+        return {"success": False,"message": "Failed to generate research report.","data": None,}
 
+    if not raw_result:
+        return {"success": False,"message": "Failed to generate research report.","data": None,}
+
+    # ---------------------------------------------------------
+    # Step 6: Validate LLM response
+    # ---------------------------------------------------------
+
+    try:
         data = json.loads(raw_result)
-        parsed_result = ResearchResponse.model_validate(data).model_dump()
+
+        parsed_result = (ResearchResponse.model_validate(data).model_dump())
+
         parsed_result["sources"] = articles
 
     except json.JSONDecodeError:
         logger.exception("LLM returned invalid JSON")
+
         return {
             "success": False,
             "message": "LLM returned invalid JSON.",
@@ -132,15 +193,15 @@ def research(query: str, progress=None):
 
     except ValidationError:
         logger.exception("LLM response failed validation")
-        return {
-            "success": False,
-            "message": "Invalid response schema.",
-            "data": None,
-        }
 
-    # Step 4: Finished
+        return {"success": False,"message": "Invalid response schema.","data": None,}
+
+    # ---------------------------------------------------------
+    # Step 7: Finished
+    # ---------------------------------------------------------
+
     if progress:
-        progress(1.0, desc="✅ Report generated!")
+        progress(1.0,desc="✅ Report generated!",)
 
     return {
         "success": True,

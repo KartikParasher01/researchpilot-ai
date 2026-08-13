@@ -1,8 +1,18 @@
 import gradio as gr
+
 from src.research import research
 
+
 def generate_report(query, progress=gr.Progress()):
-    response = research(query,progress)
+    if not query or not query.strip():
+        return (
+            "Please enter a research question.",
+            "",
+            "",
+            "",
+            "",)
+
+    response = research(query.strip(), progress)
 
     if not response["success"]:
         return (
@@ -13,7 +23,6 @@ def generate_report(query, progress=gr.Progress()):
             "",
         )
 
-    # Get the LLM response
     result = response["data"]
 
     # Format confidence
@@ -22,39 +31,34 @@ def generate_report(query, progress=gr.Progress()):
     if hasattr(confidence, "value"):
         confidence = confidence.value
 
-    confidence = {
+    confidence_labels = {
         "High": "🟢 High",
         "Medium": "🟡 Medium",
         "Low": "🔴 Low",
-    }.get(confidence, confidence)
+    }
+
+    confidence = confidence_labels.get(confidence, confidence)
 
     # Format key points
     key_points_md = "\n".join(
-        f"- {point}" for point in result["key_points"]
-    )
+        f"- {point}" for point in result["key_points"])
 
     # Format sources
     sources_md = "\n".join(
         f"- [{source['title']}]({source['url']})"
-        for source in result["sources"]
-    )
+        for source in result["sources"])
 
-    return (
-        result["summary"],
-        key_points_md,
-        result["analysis"],
-        confidence,          # <- Use formatted confidence
-        sources_md,
-    )
+    return (result["summary"],key_points_md,result["analysis"],confidence,sources_md,)
 
 
 with gr.Blocks(title="ResearchPilot AI") as demo:
 
-    gr.Markdown("""
-    # 🔍 ResearchPilot AI
+    gr.Markdown(
+        """
+        # 🔎 ResearchPilot AI
 
-    ### Your personal AI Research Assistant
-    """)
+        ### Your personal AI Research Assistant
+        """)
 
     query = gr.Textbox(
         label="Research Question",
@@ -64,7 +68,7 @@ with gr.Blocks(title="ResearchPilot AI") as demo:
 
     button = gr.Button(
         "🚀 Generate Research Report",
-        variant="primary"
+        variant="primary",
     )
 
     with gr.Group():
@@ -99,5 +103,6 @@ with gr.Blocks(title="ResearchPilot AI") as demo:
         ],
     )
 
-# demo.launch()
-demo.launch(debug=True)
+
+if __name__ == "__main__":
+    demo.launch()

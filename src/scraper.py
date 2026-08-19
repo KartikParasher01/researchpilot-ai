@@ -4,10 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
 
-
 logger = logging.getLogger(__name__)
 
-MAX_CHARS = 10_000
+MAX_CHARS = 6_000
 REQUEST_TIMEOUT = 10
 
 

@@ -13,7 +13,7 @@ from src.models import ResearchResponse
 
 logger = logging.getLogger(__name__)
 
-MAX_ARTICLES = 5
+MAX_ARTICLES = 3
 
 
 search_client = SearchClient()
